@@ -1,0 +1,164 @@
+﻿@page "/debt-tracker"
+
+<div class="debt-tracker-container">
+    <div class="main-content">
+        <div class="tracker-header">
+            <h1 class="tracker-title">Debt Tracker</h1>
+            <div class="table-container">
+                <div class="table-header">
+                    <div>Debt Type</div>
+                    <div>Due Date</div>
+                    <div>Amount</div>
+                    <div>Status</div>
+                    <div>Tags</div>
+                    <div>Action</div>
+                </div>
+                @foreach (var debt in Debts)
+                {
+                    <div class="table-row">
+                        <div>@debt.Type</div>
+                        <div>@debt.DueDate.ToString("dd-MM-yyyy")</div>
+                        <div>Rs. @debt.Amount</div>
+                        <div class="@GetStatusClass(debt.Status)">@debt.Status</div>
+                        <div>@debt.Tags</div>
+                        <div class="action-buttons">
+                            <button class="btn btn-edit" @onclick="() => EditDebt(debt)">Edit</button>
+                            <button class="btn btn-delete" @onclick="() => DeleteDebt(debt.Id)">Delete</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .debt-tracker-container {
+        background: #fff;
+        padding: 40px;
+        font-family: 'Inter', sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .tracker-header {
+        text-align: center;
+        color: #333;
+    }
+
+    .tracker-title {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .table-container {
+        margin-top: 16px;
+        overflow-x: auto;
+    }
+
+    .table-header, .table-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 2fr auto;
+        gap: 16px;
+        padding: 16px;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .table-header {
+        background: #f8f9fa;
+        font-weight: bold;
+        text-align: left;
+    }
+
+    .table-row {
+        transition: background-color 0.2s;
+    }
+
+        .table-row:hover {
+            background-color: #f1f1f1;
+        }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        font-size: 0.875rem;
+    }
+
+    .btn-edit {
+        background-color: #4caf50;
+        color: white;
+    }
+
+    .btn-delete {
+        background-color: #f44336;
+        color: white;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .status-pending {
+        color: #ff9800;
+        font-weight: bold;
+    }
+
+    .status-clear {
+        color: #4caf50;
+        font-weight: bold;
+    }
+</style>
+
+@code {
+    private List<Debt> Debts = new()
+    {
+        new Debt { Id = 1, Type = "Loan for Bike", DueDate = new DateTime(2024, 12, 20), Amount = 31000, Status = "Pending", Tags = "Loan, Yearly" },
+        new Debt { Id = 2, Type = "Car Loan Payment", DueDate = new DateTime(2025, 1, 10), Amount = 11000, Status = "Clear", Tags = "Loan, Monthly" },
+        new Debt { Id = 3, Type = "Grocery Shopping", DueDate = new DateTime(2025, 2, 1), Amount = 11100, Status = "Clear", Tags = "Groceries, Weekly" }
+    };
+
+    private string GetStatusClass(string status) => status.ToLower() switch
+    {
+        "pending" => "status-pending",
+        "clear" => "status-clear",
+        _ => string.Empty
+    };
+
+    private void EditDebt(Debt debt)
+    {
+        // Edit debt logic
+        Console.WriteLine($"Editing debt: {debt.Type}");
+    }
+
+    private void DeleteDebt(int id)
+    {
+        Debts = Debts.Where(d => d.Id != id).ToList();
+    }
+
+    public class Debt
+    {
+        public int Id { get; set; }
+        public string Type { get; set; }
+        public DateTime DueDate { get; set; }
+        public int Amount { get; set; }
+        public string Status { get; set; }
+        public string Tags { get; set; }
+    }
+}

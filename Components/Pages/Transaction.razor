@@ -1,0 +1,211 @@
+﻿@page "/transactions"
+@using System
+
+<style>
+    :root {
+        --primary-color: #000;
+        --secondary-color: #fff;
+        --accent-color: #d9d9d9;
+        --border-color: #8c8989;
+        --hover-color: #f5f5f5;
+        --focus-outline: 2px solid #4A90E2;
+        --success-color: #2E7D32;
+        --danger-color: #C62828;
+        --edit-color: #1976D2;
+        --delete-color: #D32F2F;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.5;
+        color: var(--primary-color);
+    }
+
+    .transaction-container {
+        background-color: var(--secondary-color);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        max-width: 1440px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .main-content {
+        flex-grow: 1;
+        padding: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.5rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    [role="table"] {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-header, .transaction-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-header {
+        font-weight: bold;
+        background-color: var(--accent-color);
+    }
+
+    .transaction-row:hover {
+        background-color: var(--hover-color);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 0.5rem;
+        color: var(--secondary-color);
+        cursor: pointer;
+        transition: opacity 0.2s;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .btn:focus {
+        outline: var(--focus-outline);
+        outline-offset: 2px;
+    }
+
+    .btn-edit {
+        background-color: var(--edit-color);
+    }
+
+    .btn-delete {
+        background-color: var(--delete-color);
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        background-color: var(--accent-color);
+        font-size: 0.875rem;
+        text-align: center;
+    }
+
+    .amount {
+        font-weight: 500;
+    }
+
+    .credit {
+        color: var(--success-color);
+    }
+
+    .debit {
+        color: var(--danger-color);
+    }
+</style>
+
+<div class="transaction-container">
+    <div class="content-wrapper">
+        <main class="main-content">
+            <h1 class="page-title">Transaction Management</h1>
+
+            <div role="table" aria-label="Transactions">
+                <div class="table-header" role="row">
+                    <div role="columnheader">Type</div>
+                    <div role="columnheader">Date</div>
+                    <div role="columnheader">Amount</div>
+                    <div role="columnheader">Category</div>
+                    <div role="columnheader">Description</div>
+                    <div role="columnheader">Actions</div>
+                </div>
+
+                @foreach (var transaction in transactions)
+                {
+                    <div class="transaction-row" role="row">
+                        <div role="cell" class="@transaction.Type">@transaction.Type</div>
+                        <div role="cell">@transaction.Date.ToString("dd-MM-yyyy")</div>
+                        <div role="cell" class="amount">Rs. @transaction.Amount</div>
+                        <div role="cell"><span class="tag">@transaction.Category</span></div>
+                        <div role="cell">@transaction.Description</div>
+                        <div role="cell">
+                            <div class="action-buttons">
+                                <button class="btn btn-edit" aria-label="Edit transaction" @onclick="() => EditTransaction(transaction)">
+                                    Edit
+                                </button>
+                                <button class="btn btn-delete" aria-label="Delete transaction" @onclick="() => DeleteTransaction(transaction)">
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+</div>
+
+@code {
+    public class TransactionModel
+    {
+        public int Id { get; set; }
+        public string Type { get; set; }
+        public DateTime Date { get; set; }
+        public decimal Amount { get; set; }
+        public string Category { get; set; }
+        public string Description { get; set; }
+    }
+
+    private List<TransactionModel> transactions = new List<TransactionModel>
+    {
+        new TransactionModel { Id = 1, Type = "Credit", Date = new DateTime(2024, 12, 20), Amount = 31000, Category = "Salary", Description = "Monthly Salary" },
+        new TransactionModel { Id = 2, Type = "Debit", Date = new DateTime(2025, 1, 10), Amount = 11000, Category = "Groceries", Description = "Weekly Groceries" },
+        new TransactionModel { Id = 3, Type = "Debit", Date = new DateTime(2025, 1, 18), Amount = 9700, Category = "Rent", Description = "Monthly Rent" }
+    };
+
+    private void EditTransaction(TransactionModel transaction)
+    {
+        var existingTransaction = transactions.FirstOrDefault(t => t.Id == transaction.Id);
+        if (existingTransaction != null)
+        {
+            existingTransaction.Type = transaction.Type;
+            existingTransaction.Date = transaction.Date;
+            existingTransaction.Amount = transaction.Amount;
+            existingTransaction.Category = transaction.Category;
+            existingTransaction.Description = transaction.Description;
+            StateHasChanged();
+        }
+    }
+
+    private void DeleteTransaction(TransactionModel transaction)
+    {
+        transactions.Remove(transaction);
+    }
+}

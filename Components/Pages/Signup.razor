@@ -1,0 +1,258 @@
+﻿@page "/signup"
+@using System.ComponentModel.DataAnnotations
+
+<style>
+    .signup-container {
+        background-color: rgba(255, 255, 255, 1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 50px;
+        min-height: 100vh;
+    }
+
+    .signup-wrapper {
+        display: flex;
+        flex-direction: row;
+        gap: 20px;
+        max-width: 1253px;
+        width: 100%;
+        background-color: #f9f9f9;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .signup-content {
+        display: flex;
+        flex-direction: column;
+        width: 50%;
+        padding: 20px 40px;
+    }
+
+    .signup-form-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: rgba(0, 0, 0, 1);
+        font: 500 20px Inter, sans-serif;
+    }
+
+    .welcome-heading {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .signin-link {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .signin-text {
+        text-decoration: underline;
+        color: rgba(4, 78, 152, 1);
+        font-weight: bold;
+    }
+
+    .form-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+        .input-group label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+    .input-field {
+        border-radius: 10px;
+        background-color: rgba(217, 217, 217, 1);
+        height: 45px;
+        width: 100%;
+        border: none;
+        padding: 10px 15px;
+    }
+
+    .currency-select {
+        border-radius: 10px;
+        background-color: rgba(217, 217, 217, 1);
+        height: 45px;
+        width: 100%;
+        border: none;
+        padding: 10px 15px;
+    }
+
+    .signup-button {
+        border-radius: 35px;
+        background-color: rgba(18, 18, 231, 1);
+        border: none;
+        font-size: 18px;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 1);
+        padding: 10px;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+        max-width: 500px;
+        align-self: center;
+    }
+
+    .image-container {
+        width: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .signup-image {
+        width: 80%;
+        max-width: 400px;
+        border-radius: 15px;
+    }
+
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+    }
+
+ 
+    .signup-content,
+    .image-container {
+        width: 100%;
+    }
+
+    .signup-image {
+        width: 100%;
+        margin-top: 40px;
+    }
+
+    .signup-button {
+        margin-top: 40px;
+        padding: 0 20px;
+    }
+
+
+</style>
+
+<div class="signup-container">
+    <div class="signup-wrapper">
+        <!-- Image Content -->
+        <div class="image-container">
+            <img src="images/images.png"
+                 alt="Track App signup illustration"
+                 class="signup-image" />
+        </div>
+
+        <!-- Form Content -->
+        <div class="signup-content">
+            <div class="signup-form-container">
+                <h1 class="welcome-heading">Welcome To TrackApp</h1>
+                <p class="signin-link">
+                    Already have an account?
+                    <a href="/login" class="signin-text">Signin</a>
+                </p>
+
+                <!-- Sign-up Form -->
+                <EditForm Model="@signupModel" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-wrapper">
+                        <!-- Email -->
+                        <div class="input-group">
+                            <label for="email">Email</label>
+                            <InputText id="email"
+                                       class="input-field"
+                                       @bind-Value="signupModel.Email"
+                                       placeholder="Enter your Email" />
+                            <ValidationMessage For="@(() => signupModel.Email)" />
+                        </div>
+
+                        <!-- Username -->
+                        <div class="input-group">
+                            <label for="username">Username</label>
+                            <InputText id="username"
+                                       class="input-field"
+                                       @bind-Value="signupModel.Username"
+                                       placeholder="Enter your Username" />
+                            <ValidationMessage For="@(() => signupModel.Username)" />
+                        </div>
+
+                        <!-- Password -->
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <InputText id="password"
+                                       type="password"
+                                       class="input-field"
+                                       @bind-Value="signupModel.Password"
+                                       placeholder="Enter your Password" />
+                            <ValidationMessage For="@(() => signupModel.Password)" />
+                        </div>
+
+                        <!-- Currency -->
+                        <div class="input-group">
+                            <label for="currency">Currency</label>
+                            <InputSelect id="currency"
+                                         class="currency-select"
+                                         @bind-Value="signupModel.Currency">
+                                <option value="">Select Currency</option>
+                                <option value="usd">USD</option>
+                                <option value="eur">EUR</option>
+                                <option value="gbp">GBP</option>
+                                <option value="npr">NPR</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => signupModel.Currency)" />
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="signup-button">Signup</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private SignupModel signupModel = new SignupModel();
+
+    private void HandleValidSubmit()
+    {
+        // Logic for sign-up form submission
+        Console.WriteLine($"Signup successful for {signupModel.Username} with email {signupModel.Email}");
+    }
+
+    public class SignupModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; }
+
+        [Required(ErrorMessage = "Username is required")]
+        public string Username { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        [DataType(DataType.Password)]
+        public string Password { get; set; }
+
+        [Required(ErrorMessage = "Currency is required")]
+        public string Currency { get; set; }
+    }
+}

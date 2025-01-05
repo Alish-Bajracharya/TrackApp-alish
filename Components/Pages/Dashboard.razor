@@ -1,0 +1,499 @@
+﻿@page "/dashboard"
+
+<style>
+    :root {
+        --primary-bg: #1a1a1a;
+        --card-bg-green: #A0FF8F;
+        --card-bg-yellow: #FFDB67;
+        --card-bg-blue: #6776FF;
+        --card-bg-red: #FF4B4B;
+        --card-bg-cyan: #67E6FF;
+        --card-bg-purple: #BA67FF;
+        --border-color: #8C8989;
+        --text-primary: #000;
+        --text-secondary: #fff;
+        --filter-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        --transition-speed: 0.3s;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.5;
+        background: #fff;
+    }
+
+    .dashboard-container {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .main-content {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 500;
+    }
+
+    .search-and-filter {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .search-container {
+        position: relative;
+        width: 300px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        padding-right: 3rem;
+        border: none;
+        border-radius: 35px;
+        background: #d9d9d9;
+        font-size: 1rem;
+    }
+
+    .search-button {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+
+    .filter-button {
+        background: #d9d9d9;
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color var(--transition-speed);
+    }
+
+        .filter-button:hover {
+            background: #c4c4c4;
+        }
+
+        .filter-button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+    .filters-panel {
+        position: absolute;
+        top: calc(100% + 1rem);
+        right: 0;
+        width: 320px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: var(--filter-shadow);
+        padding: 1.5rem;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all var(--transition-speed);
+    }
+
+        .filters-panel.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+    .filter-group {
+        margin-bottom: 1.5rem;
+    }
+
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+
+    .filter-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .filter-select,
+    .filter-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        background: #fff;
+    }
+
+        .filter-select[multiple] {
+            height: 100px;
+        }
+
+    .date-range {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+        .date-range .filter-input {
+            flex: 1;
+        }
+
+    .sort-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .sort-button {
+        flex: 1;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all var(--transition-speed);
+    }
+
+        .sort-button[aria-pressed="true"] {
+            background: #d9d9d9;
+            border-color: #999;
+        }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .card {
+        padding: 1.5rem;
+        border-radius: 35px;
+        color: var(--text-primary);
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+    }
+
+    .card-amount {
+        font-size: 2rem;
+        font-weight: 600;
+    }
+
+    .balance-card {
+        background: var(--card-bg-green);
+    }
+
+    .inflow-card {
+        background: var(--card-bg-yellow);
+    }
+
+    .outflow-card {
+        background: var(--card-bg-blue);
+    }
+
+    .debt-card {
+        background: var(--card-bg-red);
+    }
+
+    .remaining-card {
+        background: var(--card-bg-cyan);
+    }
+
+    .cleared-card {
+        background: var(--card-bg-purple);
+    }
+
+    .transactions-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #FFFAE4;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+        .transactions-table th,
+        .transactions-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .transactions-table th {
+            font-weight: 500;
+            background: rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+            .transactions-table th:hover {
+                background: rgba(0, 0, 0, 0.1);
+            }
+
+    .tag {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        background: #e0e0e0;
+        font-size: 0.875rem;
+        margin-right: 0.5rem;
+    }
+
+  
+
+    .main-content {
+        padding: 1rem;
+    }
+
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .search-and-filter {
+        width: 100%;
+    }
+
+    .search-container {
+        flex: 1;
+    }
+
+    .filters-panel {
+        width: 100%;
+        max-width: 320px;
+    }
+
+
+    [role="button"],
+    button {
+        cursor: pointer;
+    }
+
+    :focus-visible {
+        outline: 3px solid #4A90E2;
+        outline-offset: 2px;
+    }
+</style>
+
+<script>
+    <script>
+        document.querySelectorAll('.nav-link[aria-expanded]').forEach(button => {
+            button.addEventListener('click', () => {
+                const expanded = button.getAttribute('aria-expanded') === 'true';
+                button.setAttribute('aria-expanded', !expanded);
+                const dropdown = document.getElementById(button.getAttribute('aria-controls'));
+                dropdown.classList.toggle('show');
+            });
+        });
+
+        const filterButton = document.querySelector('.filter-button');
+        const filtersPanel = document.getElementById('filters-panel');
+
+        filterButton.addEventListener('click', () => {
+            const expanded = filterButton.getAttribute('aria-expanded') === 'true';
+            filterButton.setAttribute('aria-expanded', !expanded);
+            filtersPanel.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!filterButton.contains(event.target) && !filtersPanel.contains(event.target)) {
+                filterButton.setAttribute('aria-expanded', 'false');
+                filtersPanel.classList.remove('show');
+            }
+        });
+
+        document.querySelectorAll('.sort-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.sort-button').forEach(btn => {
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                button.setAttribute('aria-pressed', 'true');
+            });
+        });
+</script>
+
+<main class="dashboard-container">
+    <!-- Main Content -->
+    <div class="main-content">
+        <header class="header">
+            <h1 class="page-title">Dashboard</h1>
+            <div class="search-and-filter">
+                <div class="search-container">
+                    <input type="search" id="search" class="search-input" placeholder="Search transactions">
+                    <button type="button" class="search-button" aria-label="Submit search">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                    </button>
+                </div>
+                <button type="button" class="filter-button" aria-expanded="false" aria-controls="filters-panel" aria-label="Show filters">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14" />
+                        <line x1="4" y1="10" x2="4" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12" y2="3" />
+                        <line x1="20" y1="21" x2="20" y2="16" />
+                        <line x1="20" y1="12" x2="20" y2="3" />
+                        <line x1="1" y1="14" x2="7" y2="14" />
+                        <line x1="9" y1="8" x2="15" y2="8" />
+                        <line x1="17" y1="16" x2="23" y2="16" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Chart Section -->
+        <section>
+            <img src="images/pie.png" alt="Chart showing financial data" style="width: 100%; border-radius: 10px; margin-bottom: 2rem;">
+        </section>
+
+        <!-- Dashboard Grid -->
+        <section class="dashboard-grid">
+            <div class="card balance-card">
+                <h2 class="card-title">Available Balance</h2>
+                <p class="card-amount">₹4,50,000</p>
+            </div>
+            <div class="card inflow-card">
+                <h2 class="card-title">Total Cash Inflow</h2>
+                <p class="card-amount">₹2,50,000</p>
+            </div>
+            <div class="card outflow-card">
+                <h2 class="card-title">Total Cash Outflow</h2>
+                <p class="card-amount">₹45,000</p>
+            </div>
+            <div class="card debt-card">
+                <h2 class="card-title">Total Debt</h2>
+                <p class="card-amount">₹45,000</p>
+            </div>
+            <div class="card remaining-card">
+                <h2 class="card-title">Remaining Debt</h2>
+                <p class="card-amount">₹5,000</p>
+            </div>
+            <div class="card cleared-card">
+                <h2 class="card-title">Cleared Debt</h2>
+                <p class="card-amount">₹40,000</p>
+            </div>
+        </section>
+
+        <!-- Top 5 Pending Debts -->
+        <section aria-labelledby="pending-debts-heading" style="margin-top: 2rem;">
+            <h2 id="pending-debts-heading">Top 5 Pending Debts</h2>
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>John Doe</td>
+                        <td>₹5,000</td>
+                        <td>05-01-2025</td>
+                    </tr>
+                    <tr>
+                        <td>Jane Smith</td>
+                        <td>₹4,500</td>
+                        <td>10-01-2025</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Top 5 Highest Transactions -->
+        <section aria-labelledby="highest-transactions-heading" style="margin-top: 2rem;">
+            <h2 id="highest-transactions-heading">Top 5 Highest Transactions</h2>
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Aryan Shrestha</td>
+                        <td>Income</td>
+                        <td>₹10,000</td>
+                    </tr>
+                    <tr>
+                        <td>Alish Bajracharya</td>
+                        <td>Investment</td>
+                        <td>₹9,000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Top 5 Lowest Transactions -->
+        <section aria-labelledby="lowest-transactions-heading" style="margin-top: 2rem;">
+            <h2 id="lowest-transactions-heading">Top 5 Lowest Transactions</h2>
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>John Doe</td>
+                        <td>Expense</td>
+                        <td>₹100</td>
+                    </tr>
+                    <tr>
+                        <td>Jane Smith</td>
+                        <td>Bill</td>
+                        <td>₹200</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+
+@code {
+    private bool IsDropdownExpanded { get; set; }
+
+    private void ToggleDropdown()
+    {
+        IsDropdownExpanded = !IsDropdownExpanded;
+    }
+}
