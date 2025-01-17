@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using TrackApp_alish.Services;
 
 namespace TrackApp_alish
 {
@@ -15,9 +16,19 @@ namespace TrackApp_alish
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddTransient<UserService>();
+            builder.Services.AddSingleton<UserService>();
+            builder.Services.AddScoped<AuthenticationService>();
+            builder.Services.AddScoped<AuthenticationService>();
+            builder.Services.AddScoped<ITransactionService, TransactionService>();
+            builder.Services.AddSingleton<ITransactionService, TransactionService>();
+            builder.Services.AddSingleton<IDebtService, DebtService>();
+            builder.Services.AddScoped<IDebtService, DebtService>();
+
+
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 

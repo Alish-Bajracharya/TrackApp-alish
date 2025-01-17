@@ -1,41 +1,52 @@
-﻿using TrackApp_alish.Models;
+﻿using System.Text.Json;
+using TrackApp_alish.Models;
 
 namespace TrackApp_alish.Services
 {
     public class UserService
     {
-        // Simulate saving the user data to a database or API
-        public bool RegisterUser(SignupModel signupModel)
+        private readonly string _filePath;
+
+        public UserService()
         {
-            // Example: Logic to save user to database
-            // This could involve calling a database service or API here
+            _filePath = Path.Combine(AppContext.BaseDirectory, "User.json");
+            if (!File.Exists(_filePath))
+            {
+                File.WriteAllText(_filePath, "[]");
+            }
+        }
 
-            // For now, simulate success
-            Console.WriteLine($"User {signupModel.Username} registered with email {signupModel.Email} and currency {signupModel.Currency}");
+        public List<UserModel> GetAllUsers()
+        {
+            var jsonData = File.ReadAllText(_filePath);
+            return JsonSerializer.Deserialize<List<UserModel>>(jsonData) ?? new List<UserModel>();
+        }
 
+        public bool AddUser(UserModel newUser)
+        {
+            var users = GetAllUsers();
+
+            // Check if the username or email already exists
+            if (users.Any(u => u.Username == newUser.Username || u.Email == newUser.Email))
+            {
+                return false;
+            }
+
+            users.Add(newUser);
+            SaveUsers(users);
             return true;
         }
-    private LoginModel loginModel = new LoginModel();
 
-        private void HandleValidSubmit()
+        public UserModel ValidateUser(string username, string password)
         {
-            bool loginSuccess = UserService.LoginUser(loginModel);
-
-            if (loginSuccess)
-            {
-                // Logic for successful login
-                Console.WriteLine($"Login successful for {loginModel.Username}");
-            }
-            else
-            {
-                // Logic for failed login
-                Console.WriteLine("Invalid credentials or missing fields.");
-            }
+            var users = GetAllUsers();
+            return users.FirstOrDefault(u => u.Username == username && u.Password == password);
         }
 
-        private static bool LoginUser(LoginModel loginModel)
+        private void SaveUsers(List<UserModel> users)
         {
-            throw new NotImplementedException();
+            var jsonData = JsonSerializer.Serialize(users);
+            File.WriteAllText(_filePath, jsonData);
         }
     }
 }

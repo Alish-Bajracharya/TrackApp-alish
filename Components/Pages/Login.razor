@@ -1,119 +1,124 @@
 ﻿@page "/"
 @using System.ComponentModel.DataAnnotations
+@inject TrackApp_alish.Services.UserService UserService
+@using TrackApp_alish.Models
+@inject NavigationManager NavigationManager
+@inject TrackApp_alish.Services.AuthenticationService AuthService
+
 
 <style>
     .login-container {
-        background-color: #fff;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 50px;
-        min-height: 100vh;
+    background-color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px;
+    min-height: 100vh;
     }
 
     .content-wrapper {
-        display: flex;
-        flex-direction: row;
-        max-width: 1253px;
-        width: 100%;
-        gap: 20px;
-        background-color: #f9f9f9;
-        border-radius: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: row;
+    max-width: 1253px;
+    width: 100%;
+    gap: 20px;
+    background-color: #f9f9f9;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     .image-column {
-        width: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     }
 
     .login-image {
-        width: 80%;
-        max-width: 400px;
-        border-radius: 15px;
+    width: 80%;
+    max-width: 400px;
+    border-radius: 15px;
     }
 
     .form-column {
-        width: 50%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 20px 40px;
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 40px;
     }
 
     .form-container {
-        display: flex;
-        flex-direction: column;
-        color: #000;
-        font-family: "Inter", sans-serif;
+    display: flex;
+    flex-direction: column;
+    color: #000;
+    font-family: "Inter", sans-serif;
     }
 
     .welcome-title {
-        font-size: 32px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        text-align: center;
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-align: center;
     }
 
     .signup-text {
-        text-align: center;
-        margin-bottom: 30px;
+    text-align: center;
+    margin-bottom: 30px;
     }
 
     .signup-link {
-        text-decoration: underline;
-        color: rgb(3, 70, 158);
-        font-weight: bold;
+    text-decoration: underline;
+    color: rgb(3, 70, 158);
+    font-weight: bold;
     }
 
     .login-form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
     }
 
     .input-group {
-        display: flex;
-        flex-direction: column;
+    display: flex;
+    flex-direction: column;
     }
 
-        .input-group label {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
-        }
+    .input-group label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+    }
 
     .input-field {
-        border-radius: 10px;
-        background-color: #d9d9d9;
-        height: 45px;
-        width: 100%;
-        border: none;
-        padding: 10px 15px;
+    border-radius: 10px;
+    background-color: #d9d9d9;
+    height: 45px;
+    width: 100%;
+    border: none;
+    padding: 10px 15px;
     }
 
     .currency-select {
-        border-radius: 10px;
-        background-color: #d9d9d9;
-        height: 45px;
-        border: none;
-        padding: 10px 15px;
+    border-radius: 10px;
+    background-color: #d9d9d9;
+    height: 45px;
+    border: none;
+    padding: 10px 15px;
     }
 
     .login-button {
-        border-radius: 35px;
-        background-color: rgb(18, 18, 231);
-        border: none;
-        font-size: 18px;
-        font-weight: bold;
-        color: #fff;
-        padding: 10px;
-        cursor: pointer;
-        text-align: center;
-        width: 100%;
+    border-radius: 35px;
+    background-color: rgb(18, 18, 231);
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+    width: 100%;
     }
 </style>
 
@@ -122,8 +127,8 @@
         <!-- Image Column -->
         <div class="image-column">
             <img src="images/images.png"
-                 alt="Login Image"
-                 class="login-image" />
+            alt="Login Image"
+            class="login-image" />
         </div>
 
         <!-- Form Column -->
@@ -139,13 +144,23 @@
                     <ValidationSummary />
 
                     <div class="login-form">
+                        <!-- Email -->
+                        <div class="input-group">
+                            <label for="email">Email</label>
+                            <InputText id="email"
+                                       class="input-field"
+                                       @bind-Value="loginModel.Email"
+                                       placeholder="Enter your Email" />
+                            <ValidationMessage For="@(() => loginModel.Email)" />
+                        </div>
+
                         <!-- Username -->
                         <div class="input-group">
                             <label for="username">Username</label>
                             <InputText id="username"
-                                       class="input-field"
-                                       @bind-Value="loginModel.Username"
-                                       placeholder="Enter your Username" />
+                            class="input-field"
+                            @bind-Value="loginModel.Username"
+                            placeholder="Enter your Username" />
                             <ValidationMessage For="@(() => loginModel.Username)" />
                         </div>
 
@@ -153,10 +168,10 @@
                         <div class="input-group">
                             <label for="password">Password</label>
                             <InputText id="password"
-                                       type="password"
-                                       class="input-field"
-                                       @bind-Value="loginModel.Password"
-                                       placeholder="Enter your Password" />
+                            type="password"
+                            class="input-field"
+                            @bind-Value="loginModel.Password"
+                            placeholder="Enter your Password" />
                             <ValidationMessage For="@(() => loginModel.Password)" />
                         </div>
 
@@ -164,8 +179,8 @@
                         <div class="input-group">
                             <label for="currency">Currency</label>
                             <InputSelect id="currency"
-                                         class="currency-select"
-                                         @bind-Value="loginModel.Currency">
+                            class="currency-select"
+                            @bind-Value="loginModel.Currency">
                                 <option value="">Select Currency</option>
                                 <option value="usd">USD</option>
                                 <option value="eur">EUR</option>
@@ -184,13 +199,27 @@
     </div>
 </div>
 
-@code {
-    private LoginModel loginModel = new LoginModel();
 
+@code {
+    private UserModel loginModel = new UserModel();
+    private string errorMessage;
+
+   
     private void HandleValidSubmit()
     {
-        // Logic for login form submission
-        Console.WriteLine($"Username: {loginModel.Username}, Currency: {loginModel.Currency}");
+        var user = UserService.ValidateUser(loginModel.Username, loginModel.Password);
+        if (user != null)
+        {
+            AuthService.SetAuthenticatedUser(user); // Authenticate user
+            errorMessage = string.Empty;
+            Console.WriteLine($"Welcome, {user.Username}!");
+            // Redirect to the dashboard
+            NavigationManager.NavigateTo("/dashboard");
+        }
+        else
+        {
+            errorMessage = "Invalid username or password.";
+        }
     }
 
     public class LoginModel
@@ -201,8 +230,5 @@
         [Required(ErrorMessage = "Password is required")]
         [DataType(DataType.Password)]
         public string Password { get; set; }
-
-        [Required(ErrorMessage = "Currency is required")]
-        public string Currency { get; set; }
     }
 }

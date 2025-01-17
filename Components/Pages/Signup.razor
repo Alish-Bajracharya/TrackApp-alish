@@ -1,5 +1,9 @@
 ﻿@page "/signup"
 @using System.ComponentModel.DataAnnotations
+@inject TrackApp_alish.Services.UserService UserService
+@using TrackApp_alish.Models
+@inject NavigationManager NavigationManager
+
 
 <style>
     .signup-container {
@@ -166,7 +170,7 @@
                 <h1 class="welcome-heading">Welcome To TrackApp</h1>
                 <p class="signin-link">
                     Already have an account?
-                    <a href="/login" class="signin-text">Signin</a>
+                    <a href="/" class="signin-text">Signin</a>
                 </p>
 
                 <!-- Sign-up Form -->
@@ -230,13 +234,33 @@
     </div>
 </div>
 
+
 @code {
-    private SignupModel signupModel = new SignupModel();
+    private UserModel signupModel = new UserModel();
+    private string successMessage;
+    private string errorMessage;
 
     private void HandleValidSubmit()
     {
-        // Logic for sign-up form submission
-        Console.WriteLine($"Signup successful for {signupModel.Username} with email {signupModel.Email}");
+        var newUser = new UserModel
+            {
+                Username = signupModel.Username,
+                Email = signupModel.Email,
+                Password = signupModel.Password,
+                Currency = signupModel.Currency
+            };
+
+        if (UserService.AddUser(newUser))
+        {
+            successMessage = "Signup successful! You can now login.";
+            errorMessage = string.Empty;
+            signupModel = new UserModel(); // Reset the form
+        }
+        else
+        {
+            errorMessage = "Username or email already exists.";
+            successMessage = string.Empty;
+        }
     }
 
     public class SignupModel

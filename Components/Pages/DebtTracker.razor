@@ -1,119 +1,150 @@
 ﻿@page "/debt-tracker"
-
-<div class="debt-tracker-container">
-    <div class="main-content">
-        <div class="tracker-header">
-            <h1 class="tracker-title">Debt Tracker</h1>
-            <div class="table-container">
-                <div class="table-header">
-                    <div>Debt Type</div>
-                    <div>Due Date</div>
-                    <div>Amount</div>
-                    <div>Status</div>
-                    <div>Tags</div>
-                    <div>Action</div>
-                </div>
-                @foreach (var debt in Debts)
-                {
-                    <div class="table-row">
-                        <div>@debt.Type</div>
-                        <div>@debt.DueDate.ToString("dd-MM-yyyy")</div>
-                        <div>Rs. @debt.Amount</div>
-                        <div class="@GetStatusClass(debt.Status)">@debt.Status</div>
-                        <div>@debt.Tags</div>
-                        <div class="action-buttons">
-                            <button class="btn btn-edit" @onclick="() => EditDebt(debt)">Edit</button>
-                            <button class="btn btn-delete" @onclick="() => DeleteDebt(debt.Id)">Delete</button>
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
+@using TrackApp_alish.Models
+@using TrackApp_alish.Services
+@inject IDebtService DebtService
 
 <style>
     .debt-tracker-container {
-        background: #fff;
-        padding: 40px;
-        font-family: 'Inter', sans-serif;
-        max-width: 1200px;
-        margin: 0 auto;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-    }
-
-    .main-content {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+        padding: 20px;
+        max-width: 900px;
+        margin: auto;
+        background: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .tracker-header {
         text-align: center;
         color: #333;
-    }
-
-    .tracker-title {
         font-size: 2rem;
         font-weight: bold;
     }
 
+    .controls {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        align-items: center;
+    }
+
+        .controls input,
+        .controls select {
+            padding: 8px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-right: 8px;
+            width: 200px;
+        }
+
+    .btn-add {
+        background-color: #007bff;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        border: none;
+    }
+
+        .btn-add:hover {
+            background-color: #0056b3;
+        }
+
+    .summary {
+        margin-top: 20px;
+        font-size: 1.125rem;
+    }
+
+        .summary p {
+            margin: 8px 0;
+        }
+
     .table-container {
         margin-top: 16px;
         overflow-x: auto;
+        border-radius: 8px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    .table-header, .table-row {
+    .table-header,
+    .table-row {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr 2fr auto;
-        gap: 16px;
-        padding: 16px;
-        align-items: center;
+        grid-template-columns: 2fr 1fr 1fr 1fr 2fr 1fr; /* Defines column proportions */
+        gap: 0; /* No unnecessary gaps */
+        padding: 12px 12px; /* Equal spacing for clean alignment */
         border-bottom: 1px solid #ddd;
+        text-align: left;
+        align-items: center; /* Vertically aligns content */
     }
 
     .table-header {
-        background: #f8f9fa;
+        background-color: #f8f9fa; /* Light background for the header */
         font-weight: bold;
-        text-align: left;
+        font-size: 1rem; /* Slightly larger font for headers */
+        text-transform: uppercase; /* Professional touch */
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
     }
 
     .table-row {
-        transition: background-color 0.2s;
+        font-size: 0.95rem; /* Consistent font size */
+        padding: 8px 8px;
+        align-items: center; /* Vertically centers content */
+        background-color: #fff; /* White background for rows */
     }
 
+        .table-row:nth-child(even) {
+            background-color: #f9f9f9; /* Subtle zebra striping */
+        }
+
         .table-row:hover {
-            background-color: #f1f1f1;
+            background-color: #f1f1f1; /* Light hover effect for better interactivity */
         }
 
     .action-buttons {
         display: flex;
-        gap: 8px;
+        justify-content: center; /* Center-align buttons */
+        gap: 10px; /* Space between buttons */
     }
 
     .btn {
-        padding: 8px 12px;
+        padding: 6px 6px; /* Tight padding for consistency */
         border: none;
         border-radius: 4px;
+        font-size: 0.875rem; /* Keeps button text compact */
         cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: 0.875rem;
+        font-weight: bold;
+        color: #fff; /* White text for contrast */
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .btn-edit {
-        background-color: #4caf50;
-        color: white;
+        background-color: #28a745; /* Green for Edit */
     }
+
+        .btn-edit:hover {
+            background-color: #218838;
+            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+        }
 
     .btn-delete {
-        background-color: #f44336;
-        color: white;
+        background-color: #dc3545; /* Red for Delete */
     }
 
-    .btn:hover {
-        opacity: 0.9;
+        .btn-delete:hover {
+            background-color: #c82333;
+            box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+        }
+
+
+    /* Common focus styles */
+    .btn:focus {
+        outline: 2px solid #000; /* Highlight outline */
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.5); /* Subtle shadow for focus */
     }
+
 
     .status-pending {
         color: #ff9800;
@@ -124,41 +155,295 @@
         color: #4caf50;
         font-weight: bold;
     }
+
+    /* Modal styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+    }
+
+        .modal-content h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .modal-content label {
+            font-size: 0.875rem;
+            margin: 8px 0 4px;
+            color: #333;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+        .modal-actions button {
+            padding: 8px 16px;
+            font-size: 1rem;
+        }
+
+    .btn-save {
+        background-color: #28a745;
+        color: white;
+    }
+
+        .btn-save:hover {
+            background-color: #218838;
+        }
+
+    .btn-cancel {
+        background-color: #dc3545;
+        color: white;
+    }
+
+        .btn-cancel:hover {
+            background-color: #c82333;
+        }
+
 </style>
 
+<div class="debt-tracker-container">
+    <h1 class="tracker-header">Debt Tracker</h1>
+
+    <div class="controls">
+        <div>
+            <input type="text" placeholder="Search by title or tags" @bind="SearchQuery" @oninput="FilterDebts" />
+            <button class="btn-add" @onclick="ShowAddDebtModal">Add Debt</button>
+        </div>
+        <div>
+            <select @bind="SortBy">
+                <option value="">Sort By</option>
+                <option value="due-date">Due Date</option>
+                <option value="amount">Amount</option>
+                <option value="status">Status</option>
+            </select>
+            <button class="btn-add" @onclick="FilterDebts">Apply Filters</button>
+            <button class="btn-add" @onclick="ResetFilters">Reset Filters</button>
+        </div>
+    </div>
+
+    <div class="summary">
+        <p>Total Debt: Rs. @TotalDebt</p>
+        <p>Cleared Debt: Rs. @ClearedDebt</p>
+        <p>Remaining Debt: Rs. @RemainingDebt</p>
+    </div>
+
+    <div class="table-container">
+        <div class="table-header">
+            <div>Title</div>
+            <div>Due Date</div>
+            <div>Amount</div>
+            <div>Status</div>
+            <div>Tags</div>
+            <div>Action</div>
+        </div>
+
+        @foreach (var debt in FilteredDebts)
+        {
+            <div class="table-row">
+                <div>@debt.Title</div>
+                <div>@debt.DueDate.ToString("dd-MM-yyyy")</div>
+                <div>Rs. @debt.Amount</div>
+                <div class="@GetStatusClass(debt.Status)">@debt.Status</div>
+                <div>@debt.Tags</div>
+                <div class="action-buttons">
+                    <button class="btn btn-edit" @onclick="() => ShowEditDebtModal(debt)">Edit</button>
+                    <button class="btn btn-delete" @onclick="() => DeleteDebt(debt.Id)">Delete</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (IsModalVisible)
+    {
+        <div class="modal">
+            <div class="modal-content">
+                <h2>@(IsEditing ? "Edit Debt" : "Add Debt")</h2>
+                <form @onsubmit="HandleSubmit">
+                    <div class="input-container">
+                        <label for="debt-type">Title</label>
+                        <input id="debt-type" @bind="CurrentDebt.Title" required />
+                    </div>
+                    <div class="input-container">
+                        <label for="debt-due-date">Due Date</label>
+                        <input id="debt-due-date" type="date" @bind="CurrentDebt.DueDate" required />
+                    </div>
+                    <div class="input-container">
+                        <label for="debt-amount">Amount</label>
+                        <input id="debt-amount" type="number" @bind="CurrentDebt.Amount" required />
+                    </div>
+                    <div class="input-container">
+                        <label for="debt-status">Status</label>
+                        <select id="debt-status" @bind="CurrentDebt.Status">
+                            <option>Pending</option>
+                            <option>Clear</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <label for="debt-tags">Tags</label>
+                        <input id="debt-tags" @bind="CurrentDebt.Tags" />
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-save">Save</button>
+                        <button type="button" class="btn-cancel" @onclick="CloseModal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
 @code {
-    private List<Debt> Debts = new()
-    {
-        new Debt { Id = 1, Type = "Loan for Bike", DueDate = new DateTime(2024, 12, 20), Amount = 31000, Status = "Pending", Tags = "Loan, Yearly" },
-        new Debt { Id = 2, Type = "Car Loan Payment", DueDate = new DateTime(2025, 1, 10), Amount = 11000, Status = "Clear", Tags = "Loan, Monthly" },
-        new Debt { Id = 3, Type = "Grocery Shopping", DueDate = new DateTime(2025, 2, 1), Amount = 11100, Status = "Clear", Tags = "Groceries, Weekly" }
-    };
+    private List<Debt> Debts = new();
+    private List<Debt> FilteredDebts = new();
+    private Debt CurrentDebt = new();
+    private string SearchQuery = string.Empty;
+    private string SortBy = string.Empty;
+    private bool IsModalVisible = false;
+    private bool IsEditing = false;
 
-    private string GetStatusClass(string status) => status.ToLower() switch
-    {
-        "pending" => "status-pending",
-        "clear" => "status-clear",
-        _ => string.Empty
-    };
+    private decimal TotalDebt => Debts.Sum(d => d.Amount);
+    private decimal ClearedDebt => Debts.Where(d => d.Status == "Clear").Sum(d => d.Amount);
+    private decimal RemainingDebt => Debts.Where(d => d.Status == "Pending").Sum(d => d.Amount);
 
-    private void EditDebt(Debt debt)
+    protected override async Task OnInitializedAsync()
     {
-        // Edit debt logic
-        Console.WriteLine($"Editing debt: {debt.Type}");
+        Debts = await DebtService.GetAllDebtsAsync();
+        FilterDebts();
     }
 
-    private void DeleteDebt(int id)
+    private void FilterDebts()
     {
-        Debts = Debts.Where(d => d.Id != id).ToList();
+        var query = Debts.AsEnumerable();
+
+        // Filtering based on SearchQuery
+        if (!string.IsNullOrEmpty(SearchQuery))
+        {
+            query = query.Where(d => d.Title.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ||
+                                      d.Tags.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Sorting based on SortBy selection
+        query = SortBy switch
+        {
+            "due-date" => query.OrderBy(d => d.DueDate),
+            "amount" => query.OrderBy(d => d.Amount),
+            "status" => query.OrderBy(d => d.Status),
+            _ => query.OrderBy(d => d.Id) // Default sorting by Id
+        };
+
+        FilteredDebts = query.ToList();
     }
 
-    public class Debt
+    private void SortDebts(ChangeEventArgs e)
     {
-        public int Id { get; set; }
-        public string Type { get; set; }
-        public DateTime DueDate { get; set; }
-        public int Amount { get; set; }
-        public string Status { get; set; }
-        public string Tags { get; set; }
+        Func<Debt, object> sortKeySelector = SortBy switch
+        {
+            "due-date" => (Func<Debt, object>)(d => d.DueDate),
+            "amount" => (Func<Debt, object>)(d => d.Amount),
+            "status" => (Func<Debt, object>)(d => d.Status),
+            _ => (Func<Debt, object>)(d => d.Id)
+        };
+
+        FilteredDebts = FilteredDebts.OrderBy(sortKeySelector).ToList();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (IsEditing)
+            await DebtService.UpdateDebtAsync(CurrentDebt);
+        else
+            await DebtService.AddDebtAsync(CurrentDebt);
+
+        Debts = await DebtService.GetAllDebtsAsync();
+        FilterDebts();
+        CloseModal();
+    }
+
+    private void ShowAddDebtModal()
+    {
+        CurrentDebt = new Debt();
+        IsEditing = false;
+        IsModalVisible = true;
+    }
+
+    private void ShowEditDebtModal(Debt debt)
+    {
+        CurrentDebt = new Debt
+            {
+                Id = debt.Id,
+                Title = debt.Title,
+                DueDate = debt.DueDate,
+                Amount = debt.Amount,
+                Status = debt.Status,
+                Tags = debt.Tags
+            };
+        IsEditing = true;
+        IsModalVisible = true;
+    }
+
+    private async Task DeleteDebt(int id)
+    {
+        await DebtService.DeleteDebtAsync(id);
+        Debts = await DebtService.GetAllDebtsAsync();
+        FilterDebts();
+    }
+
+    private void CloseModal() => IsModalVisible = false;
+
+    private void ResetFilters()
+    {
+        SearchQuery = string.Empty;
+        SortBy = string.Empty;
+        FilterDebts();
+    }
+
+    private string GetStatusClass(string status)
+    {
+        // Check if the status is null or empty
+        if (string.IsNullOrEmpty(status))
+        {
+            return string.Empty; // Return an empty string if status is null or empty
+        }
+
+        // If status is not null or empty, proceed with the switch statement
+        return status.ToLower() switch
+        {
+            "pending" => "status-pending",
+            "clear" => "status-clear",
+            _ => string.Empty // Return empty for any unknown status
+        };
     }
 }
+

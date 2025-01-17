@@ -1,30 +1,27 @@
 ﻿@page "/transactions"
+@implements IAsyncDisposable
+@inject ITransactionService TransactionService
+@using TrackApp_alish.Services
+@using TrackApp_alish.Models
 @using System
+@using System.Linq
+@using System.Collections.Generic
+@using System.Threading.Tasks
 
 <style>
     :root {
         --primary-color: #000;
         --secondary-color: #fff;
-        --accent-color: #d9d9d9;
-        --border-color: #8c8989;
-        --hover-color: #f5f5f5;
+        --accent-color: #f5f5f5;
+        --border-color: #ccc;
+        --hover-color: #e6e6e6;
         --focus-outline: 2px solid #4A90E2;
         --success-color: #2E7D32;
         --danger-color: #C62828;
         --edit-color: #1976D2;
         --delete-color: #D32F2F;
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    body {
-        font-family: 'Inter', sans-serif;
-        line-height: 1.5;
-        color: var(--primary-color);
+        --popup-bg: rgba(0, 0, 0, 0.5);
+        --modal-bg: #fff;
     }
 
     .transaction-container {
@@ -35,24 +32,67 @@
     }
 
     .content-wrapper {
-        display: flex;
-        flex-direction: column;
-        padding: 1rem;
-        max-width: 1440px;
+        max-width: 1200px;
         margin: 0 auto;
-        width: 100%;
-    }
-
-    .main-content {
-        flex-grow: 1;
         padding: 1rem;
     }
 
-    .page-title {
-        font-size: 1.5rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
+    .filter-section {
+        display: flex;
+        flex-wrap: wrap; /* Allows wrapping on smaller screens */
+        gap: 1rem; /* Uniform spacing between items */
+        align-items: center; /* Vertically aligns all items */
+        justify-content: flex-start; /* Aligns items to the start */
+        margin-bottom: 1.5rem; /* Spacing below the section */
+        background-color: var(--accent-color); /* Light background */
+        padding: 1rem; /* Adds spacing around the section */
+        border-radius: 8px; /* Rounded corners for a modern look */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
     }
+
+        .filter-section select,
+        .filter-section input[type="date"] {
+            flex: 1 1 auto; /* Makes inputs responsive */
+            min-width: 150px; /* Ensures inputs don't shrink too much */
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .filter-section select:focus,
+            .filter-section input[type="date"]:focus {
+                border-color: var(--focus-outline);
+                box-shadow: 0 0 4px rgba(74, 144, 226, 0.4); /* Focus highlight */
+                outline: none;
+            }
+
+        .filter-section button {
+            padding: 0.5rem 1rem;
+            background-color: var(--success-color);
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .filter-section button:hover {
+                background-color: var(--edit-color);
+                box-shadow: 0 2px 6px rgba(25, 118, 210, 0.3); /* Hover effect */
+            }
+
+            .filter-section button:focus {
+                outline: var(--focus-outline);
+                outline-offset: 2px;
+            }
+
+    
 
     [role="table"] {
         width: 100%;
@@ -63,7 +103,7 @@
         display: grid;
         grid-template-columns: 1fr 1fr 1fr 1fr 2fr 1fr;
         align-items: center;
-        padding: 0.75rem 1rem;
+        padding: 0.75rem;
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -82,54 +122,137 @@
         justify-content: center;
     }
 
-    .btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 0.5rem;
-        color: var(--secondary-color);
-        cursor: pointer;
-        transition: opacity 0.2s;
-        font-weight: 500;
-        text-align: center;
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--popup-bg);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
     }
 
-    .btn:hover {
-        opacity: 0.9;
+    .modal-content {
+        background-color: var(--modal-bg);
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 400px;
+        width: 100%;
     }
 
-    .btn:focus {
-        outline: var(--focus-outline);
-        outline-offset: 2px;
+        .modal-content input, .modal-content select, .modal-content textarea, .modal-content button {
+            display: block;
+            margin-bottom: 1rem;
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .modal-content button {
+            background-color: var(--success-color);
+            color: var(--secondary-color);
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+            .modal-content button:hover {
+                background-color: var(--edit-color);
+            }
+
+    .popup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
     }
 
-    .btn-edit {
-        background-color: var(--edit-color);
+    .popup-content {
+        background-color: var(--secondary-color);
+        padding: 2rem;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        animation: popup-fade-in 0.3s ease-out;
     }
 
-    .btn-delete {
-        background-color: var(--delete-color);
-    }
+        .popup-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
 
-    .tag {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        background-color: var(--accent-color);
-        font-size: 0.875rem;
-        text-align: center;
-    }
+        .popup-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
 
-    .amount {
-        font-weight: 500;
-    }
+        .popup-content label {
+            font-size: 1rem;
+            font-weight: 500;
+        }
 
-    .credit {
-        color: var(--success-color);
-    }
+        .popup-content input,
+        .popup-content select,
+        .popup-content textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            color: var(--primary-color);
+            background-color: var(--accent-color);
+        }
 
-    .debit {
-        color: var(--danger-color);
-    }
+        .popup-content textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .popup-content .popup-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .popup-content .btn-primary {
+            background-color: var(--success-color);
+        }
+
+        .popup-content .btn-secondary {
+            background-color: var(--danger-color);
+        }
+
+        .popup-content .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            color: var(--secondary-color);
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+
+            .popup-content .btn:hover {
+                opacity: 0.9;
+            }
+
+            .popup-content .btn:focus {
+                outline: var(--focus-outline);
+                outline-offset: 2px;
+            }
 </style>
 
 <div class="transaction-container">
@@ -137,27 +260,44 @@
         <main class="main-content">
             <h1 class="page-title">Transaction Management</h1>
 
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <select @bind="filterType">
+                    <option value="">All Types</option>
+                    <option value="Credit">Credit</option>
+                    <option value="Debit">Debit</option>
+                    
+                </select>
+                <input type="date" @bind="filterDateFrom" />
+                <input type="date" @bind="filterDateTo" />
+                <button @onclick="ApplyFilters">Apply Filters</button>
+            </div>
+
+            <!-- Add Transaction Button -->
+            <button class="btn btn-primary" @onclick="ShowAddTransactionPopup">Add Transaction</button>
+
+            <!-- Transactions Table -->
             <div role="table" aria-label="Transactions">
                 <div class="table-header" role="row">
                     <div role="columnheader">Type</div>
                     <div role="columnheader">Date</div>
                     <div role="columnheader">Amount</div>
-                    <div role="columnheader">Category</div>
+                    <div role="columnheader">Tag</div>
                     <div role="columnheader">Description</div>
                     <div role="columnheader">Actions</div>
                 </div>
 
-                @foreach (var transaction in transactions)
+                @foreach (var transaction in filteredTransactions)
                 {
                     <div class="transaction-row" role="row">
                         <div role="cell" class="@transaction.Type">@transaction.Type</div>
                         <div role="cell">@transaction.Date.ToString("dd-MM-yyyy")</div>
                         <div role="cell" class="amount">Rs. @transaction.Amount</div>
-                        <div role="cell"><span class="tag">@transaction.Category</span></div>
+                        <div role="cell"><span class="tag">@transaction.Tag</span></div>
                         <div role="cell">@transaction.Description</div>
                         <div role="cell">
                             <div class="action-buttons">
-                                <button class="btn btn-edit" aria-label="Edit transaction" @onclick="() => EditTransaction(transaction)">
+                                <button class="btn btn-edit" aria-label="Edit transaction" @onclick="() => ShowEditTransactionPopup(transaction)">
                                     Edit
                                 </button>
                                 <button class="btn btn-delete" aria-label="Delete transaction" @onclick="() => DeleteTransaction(transaction)">
@@ -168,44 +308,143 @@
                     </div>
                 }
             </div>
+
+            <!-- Add/Edit Transaction Popup -->
+            @if (showPopup)
+            {
+                <div class="popup">
+                    <div class="popup-content">
+                        <h2>@(isEditing ? "Edit Transaction" : "Add Transaction")</h2>
+                        <form>
+                            <label>Type</label>
+                            <select @bind="currentTransaction.Type">
+                                <option value="Credit">Credit</option>
+                                <option value="Debit">Debit</option>
+        
+                            </select>
+
+                            <label>Date</label>
+                            <input type="date" @bind="currentTransaction.Date" />
+
+                            <label>Amount</label>
+                            <input type="number" @bind="currentTransaction.Amount" />
+
+                            <label>Tag</label>
+                            <select @bind="currentTransaction.Tag">
+                                @foreach (var tag in defaultTags)
+                                {
+                                    <option value="@tag">@tag</option>
+                                }
+                            </select>
+
+                            <label>Description</label>
+                            <textarea @bind="currentTransaction.Description"></textarea>
+
+                            <div class="popup-actions">
+                                <button class="btn btn-primary" type="button" @onclick="SaveTransaction">Save</button>
+                                <button class="btn btn-secondary" type="button" @onclick="ClosePopup">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
         </main>
     </div>
 </div>
 
 @code {
-    public class TransactionModel
+    private string filterType = "";
+    private DateTime? filterDateFrom;
+    private DateTime? filterDateTo;
+    private bool showPopup = false;
+    private bool isEditing = false;
+    private TransactionModel currentTransaction = new();
+    private List<string> defaultTags = new()
     {
-        public int Id { get; set; }
-        public string Type { get; set; }
-        public DateTime Date { get; set; }
-        public decimal Amount { get; set; }
-        public string Category { get; set; }
-        public string Description { get; set; }
-    }
-
-    private List<TransactionModel> transactions = new List<TransactionModel>
-    {
-        new TransactionModel { Id = 1, Type = "Credit", Date = new DateTime(2024, 12, 20), Amount = 31000, Category = "Salary", Description = "Monthly Salary" },
-        new TransactionModel { Id = 2, Type = "Debit", Date = new DateTime(2025, 1, 10), Amount = 11000, Category = "Groceries", Description = "Weekly Groceries" },
-        new TransactionModel { Id = 3, Type = "Debit", Date = new DateTime(2025, 1, 18), Amount = 9700, Category = "Rent", Description = "Monthly Rent" }
+        "Yearly", "Monthly", "Food", "Drinks", "Clothes", "Gadgets",
+        "Miscellaneous", "Fuel", "Rent", "EMI", "Party"
     };
 
-    private void EditTransaction(TransactionModel transaction)
+    private List<TransactionModel> transactions = new();
+    private List<TransactionModel> filteredTransactions = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        var existingTransaction = transactions.FirstOrDefault(t => t.Id == transaction.Id);
-        if (existingTransaction != null)
-        {
-            existingTransaction.Type = transaction.Type;
-            existingTransaction.Date = transaction.Date;
-            existingTransaction.Amount = transaction.Amount;
-            existingTransaction.Category = transaction.Category;
-            existingTransaction.Description = transaction.Description;
-            StateHasChanged();
-        }
+        transactions = await TransactionService.GetAllTransactionsAsync();
+        filteredTransactions = transactions;
     }
 
-    private void DeleteTransaction(TransactionModel transaction)
+    private void ApplyFilters()
     {
+        filteredTransactions = transactions.Where(t =>
+            (string.IsNullOrEmpty(filterType) || t.Type == filterType) &&
+            (!filterDateFrom.HasValue || t.Date >= filterDateFrom.Value) &&
+            (!filterDateTo.HasValue || t.Date <= filterDateTo.Value)
+        ).ToList();
+    }
+
+    private void ShowAddTransactionPopup()
+    {
+        currentTransaction = new TransactionModel { Date = DateTime.Now };
+        isEditing = false;
+        showPopup = true;
+    }
+
+    private void ShowEditTransactionPopup(TransactionModel transaction)
+    {
+        currentTransaction = new TransactionModel
+            {
+                Id = transaction.Id,
+                Type = transaction.Type,
+                Date = transaction.Date,
+                Amount = transaction.Amount,
+                Tag = transaction.Tag,
+                Description = transaction.Description
+            };
+        isEditing = true;
+        showPopup = true;
+    }
+
+    private async Task SaveTransaction()
+    {
+        if (isEditing)
+        {
+            var existingTransaction = transactions.FirstOrDefault(t => t.Id == currentTransaction.Id);
+            if (existingTransaction != null)
+            {
+                existingTransaction.Type = currentTransaction.Type;
+                existingTransaction.Date = currentTransaction.Date;
+                existingTransaction.Amount = currentTransaction.Amount;
+                existingTransaction.Tag = currentTransaction.Tag;
+                existingTransaction.Description = currentTransaction.Description;
+
+                await TransactionService.UpdateTransactionAsync(existingTransaction);
+            }
+        }
+        else
+        {
+            await TransactionService.AddTransactionAsync(currentTransaction);
+        }
+
+        ClosePopup();
+    }
+
+
+    private void ClosePopup()
+    {
+        showPopup = false;
+        currentTransaction = new TransactionModel();
+    }
+
+    private async Task DeleteTransaction(TransactionModel transaction)
+    {
+        await TransactionService.DeleteTransactionAsync(transaction.Id);
         transactions.Remove(transaction);
+        filteredTransactions = transactions;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Clean-up code (if needed)
     }
 }

@@ -1,4 +1,9 @@
 ﻿@page "/dashboard"
+@using TrackApp_alish.Models
+@using TrackApp_alish.Services
+@inject IDebtService DebtService
+@inject ITransactionService TransactionService
+@inject IJSRuntime JSRuntime
 
 <style>
     :root {
@@ -306,53 +311,53 @@
         outline: 3px solid #4A90E2;
         outline-offset: 2px;
     }
+
+    /* #cashFlowChart { */
+    /*     display: block; */
+    /*     width: 100px; */
+    /*     height: 50px; */
+    /* } */
+
 </style>
 
 <script>
-    <script>
-        document.querySelectorAll('.nav-link[aria-expanded]').forEach(button => {
-            button.addEventListener('click', () => {
-                const expanded = button.getAttribute('aria-expanded') === 'true';
-                button.setAttribute('aria-expanded', !expanded);
-                const dropdown = document.getElementById(button.getAttribute('aria-controls'));
-                dropdown.classList.toggle('show');
-            });
-        });
+    function renderChart(inflow, outflow) {
+        const ctx = document.getElementById('cashFlowChart');
+        if (!ctx) {
+            console.error('Canvas element not found!');
+            return;
+        }
 
-        const filterButton = document.querySelector('.filter-button');
-        const filtersPanel = document.getElementById('filters-panel');
-
-        filterButton.addEventListener('click', () => {
-            const expanded = filterButton.getAttribute('aria-expanded') === 'true';
-            filterButton.setAttribute('aria-expanded', !expanded);
-            filtersPanel.classList.toggle('show');
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!filterButton.contains(event.target) && !filtersPanel.contains(event.target)) {
-                filterButton.setAttribute('aria-expanded', 'false');
-                filtersPanel.classList.remove('show');
+        new Chart(ctx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Cash Inflow', 'Cash Outflow'],
+                datasets: [{
+                    data: [inflow, outflow],
+                    backgroundColor: ['#67FF67', '#FF6767'],
+                    borderColor: ['#4CAF50', '#F44336'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
             }
         });
-
-        document.querySelectorAll('.sort-button').forEach(button => {
-            button.addEventListener('click', () => {
-                document.querySelectorAll('.sort-button').forEach(btn => {
-                    btn.setAttribute('aria-pressed', 'false');
-                });
-                button.setAttribute('aria-pressed', 'true');
-            });
-        });
+    }
 </script>
 
 <main class="dashboard-container">
-    <!-- Main Content -->
     <div class="main-content">
         <header class="header">
             <h1 class="page-title">Dashboard</h1>
             <div class="search-and-filter">
                 <div class="search-container">
-                    <input type="search" id="search" class="search-input" placeholder="Search transactions">
+                    <input type="search" id="search" class="search-input" placeholder="Search transactions" @bind="searchQuery" />
                     <button type="button" class="search-button" aria-label="Submit search">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8" />
@@ -360,7 +365,7 @@
                         </svg>
                     </button>
                 </div>
-                <button type="button" class="filter-button" aria-expanded="false" aria-controls="filters-panel" aria-label="Show filters">
+                <button type="button" class="filter-button" aria-expanded="false" aria-controls="filters-panel" aria-label="Show filters" @onclick="ToggleFilters">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="4" y1="21" x2="4" y2="14" />
                         <line x1="4" y1="10" x2="4" y2="3" />
@@ -368,50 +373,57 @@
                         <line x1="12" y1="8" x2="12" y2="3" />
                         <line x1="20" y1="21" x2="20" y2="16" />
                         <line x1="20" y1="12" x2="20" y2="3" />
-                        <line x1="1" y1="14" x2="7" y2="14" />
-                        <line x1="9" y1="8" x2="15" y2="8" />
-                        <line x1="17" y1="16" x2="23" y2="16" />
                     </svg>
                 </button>
             </div>
         </header>
 
         <!-- Chart Section -->
-        <section>
-            <img src="images/pie.png" alt="Chart showing financial data" style="width: 100%; border-radius: 10px; margin-bottom: 2rem;">
+        <section aria-labelledby="cash-flow-chart-heading" style="margin-bottom: 2rem;">
+            <h2 id="cash-flow-chart-heading">Cash Flow Overview</h2>
+            <div style="width: 800px; height: 400px; margin: 0 auto;">
+                <canvas id="cashFlowChart"></canvas>
+            </div>
         </section>
 
         <!-- Dashboard Grid -->
         <section class="dashboard-grid">
             <div class="card balance-card">
                 <h2 class="card-title">Available Balance</h2>
-                <p class="card-amount">₹4,50,000</p>
+                <p class="card-amount">₹@totalBalance</p>
             </div>
             <div class="card inflow-card">
                 <h2 class="card-title">Total Cash Inflow</h2>
-                <p class="card-amount">₹2,50,000</p>
+                <p class="card-amount">₹@totalInflow</p>
             </div>
             <div class="card outflow-card">
                 <h2 class="card-title">Total Cash Outflow</h2>
-                <p class="card-amount">₹45,000</p>
+                <p class="card-amount">₹@totalOutflow</p>
             </div>
             <div class="card debt-card">
                 <h2 class="card-title">Total Debt</h2>
-                <p class="card-amount">₹45,000</p>
+                <p class="card-amount">₹@totalDebt</p>
             </div>
             <div class="card remaining-card">
                 <h2 class="card-title">Remaining Debt</h2>
-                <p class="card-amount">₹5,000</p>
+                <p class="card-amount">₹@remainingDebt</p>
             </div>
             <div class="card cleared-card">
                 <h2 class="card-title">Cleared Debt</h2>
-                <p class="card-amount">₹40,000</p>
+                <p class="card-amount">₹@clearedDebt</p>
             </div>
         </section>
 
-        <!-- Top 5 Pending Debts -->
+        <!-- Pending Debts -->
         <section aria-labelledby="pending-debts-heading" style="margin-top: 2rem;">
-            <h2 id="pending-debts-heading">Top 5 Pending Debts</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="pending-debts-heading">Top 5 Pending Debts</h2>
+                <div class="filter-group" style="display: flex; gap: 1rem; align-items: center;">
+                    <label for="pendingFilter" class="filter-label" style="margin: 0;">Filter:</label>
+                    <input type="text" id="pendingFilter" class="filter-input" placeholder="Filter by title" @bind="searchQuery" />
+                    <button class="sort-button" @onclick="ApplyFilters" style="height: fit-content;">Apply</button>
+                </div>
+            </div>
             <table class="transactions-table">
                 <thead>
                     <tr>
@@ -421,19 +433,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>John Doe</td>
-                        <td>₹5,000</td>
-                        <td>05-01-2025</td>
-                    </tr>
-                    <tr>
-                        <td>Jane Smith</td>
-                        <td>₹4,500</td>
-                        <td>10-01-2025</td>
-                    </tr>
+                    @foreach (var debt in filteredDebts)
+                    {
+                        <tr>
+                            <td>@debt.Title</td>
+                            <td>₹@debt.Amount</td>
+                            <td>@debt.DueDate.ToString("dd-MM-yyyy")</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </section>
+
+
 
         <!-- Top 5 Highest Transactions -->
         <section aria-labelledby="highest-transactions-heading" style="margin-top: 2rem;">
@@ -447,16 +459,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Aryan Shrestha</td>
-                        <td>Income</td>
-                        <td>₹10,000</td>
-                    </tr>
-                    <tr>
-                        <td>Alish Bajracharya</td>
-                        <td>Investment</td>
-                        <td>₹9,000</td>
-                    </tr>
+                    @foreach (var transaction in highestTransactions)
+                    {
+                        <tr>
+                            <td>@transaction.Description</td>
+                            <td>@transaction.Type</td>
+                            <td>₹@transaction.Amount</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </section>
@@ -473,16 +483,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>John Doe</td>
-                        <td>Expense</td>
-                        <td>₹100</td>
-                    </tr>
-                    <tr>
-                        <td>Jane Smith</td>
-                        <td>Bill</td>
-                        <td>₹200</td>
-                    </tr>
+                    @foreach (var transaction in lowestTransactions)
+                    {
+                        <tr>
+                            <td>@transaction.Description</td>
+                            <td>@transaction.Type</td>
+                            <td>₹@transaction.Amount</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </section>
@@ -490,10 +498,89 @@
 </main>
 
 @code {
-    private bool IsDropdownExpanded { get; set; }
+    private decimal totalBalance;
+    private decimal totalInflow;
+    private decimal totalOutflow;
+    private decimal totalDebt;
+    private decimal remainingDebt;
+    private decimal clearedDebt;
+    private string searchQuery;
+    private List<Debt> filteredDebts = new List<Debt>();
+    private DateTime? filterStartDate;
+    private DateTime? filterEndDate;
+    private List<Debt> pendingDebts = new List<Debt>();
+    private List<TransactionModel> highestTransactions = new List<TransactionModel>();
+    private List<TransactionModel> lowestTransactions = new List<TransactionModel>();
 
-    private void ToggleDropdown()
+    protected override async Task OnInitializedAsync()
     {
-        IsDropdownExpanded = !IsDropdownExpanded;
+        await LoadDashboardData();
+        RenderChart();
+
+    }
+
+    private async Task LoadDashboardData()
+    {
+        var debts = await DebtService.GetAllDebtsAsync();
+        pendingDebts = debts.Where(d => d.Status == "Pending").Take(5).ToList();
+        filteredDebts = pendingDebts;
+
+        var transactions = await TransactionService.GetAllTransactionsAsync();
+
+        totalInflow = transactions.Where(t => t.Type == "Credit").Sum(t => t.Amount);
+        totalOutflow = transactions.Where(t => t.Type == "Debit").Sum(t => t.Amount);
+        totalDebt = debts.Sum(d => d.Amount);
+        clearedDebt = debts.Where(d => d.Status == "Cleared").Sum(d => d.Amount);
+        remainingDebt = totalDebt - clearedDebt;
+
+        highestTransactions = transactions.OrderByDescending(t => t.Amount).Take(5).ToList();
+        lowestTransactions = transactions.OrderBy(t => t.Amount).Take(5).ToList();
+        totalBalance = totalInflow - totalOutflow - remainingDebt;
+    }
+
+    private void ApplyFilters()
+    {
+        filteredDebts = pendingDebts;
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredDebts = filteredDebts.Where(d => d.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (filterStartDate.HasValue)
+        {
+            filteredDebts = filteredDebts.Where(d => d.DueDate >= filterStartDate.Value).ToList();
+        }
+
+        if (filterEndDate.HasValue)
+        {
+            filteredDebts = filteredDebts.Where(d => d.DueDate <= filterEndDate.Value).ToList();
+        }
+    }
+
+
+    private void RenderChart()
+    {
+        InvokeAsync(() =>
+        {
+            var inflow = Convert.ToDouble(totalInflow);
+            var outflow = Convert.ToDouble(totalOutflow);
+
+            // Ensure JSRuntime is invoking the JavaScript correctly
+            JSRuntime.InvokeVoidAsync("renderChart", inflow, outflow);
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            RenderChart();
+        }
+    }
+
+    private void ToggleFilters()
+    {
+        // Add logic for filter toggling if necessary
     }
 }

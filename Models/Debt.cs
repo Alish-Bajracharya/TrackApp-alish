@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace TrackApp_alish.Models
 {
-    public class DebtModels
+    public class Debt
     {
         public int Id { get; set; }
-        public string Type { get; set; }
+        public string Title { get; set; }
         public DateTime DueDate { get; set; }
         public decimal Amount { get; set; }
         public string Status { get; set; }
-        public List<string> Tags { get; set; }
+        public string Tags { get; set; }
     }
-
 }
+
